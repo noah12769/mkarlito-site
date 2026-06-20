@@ -131,7 +131,7 @@ a { color: inherit; }
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
-  color: rgba(255,255,255,.78);
+  color: rgba(255,255,255,.80);
   transition: color .2s;
 }
 .nav-item:hover .nav-label,
@@ -139,18 +139,19 @@ a { color: inherit; }
 
 .nav-dot-sep {
   font-size: 22px;
-  color: rgba(255,255,255,.75);
+  color: rgba(255,255,255,.80);
   line-height: 1;
   user-select: none;
 }
 
-/* Niveau 2 : ligne — même largeur content-box = même départ que label, même fin que point */
+/* Niveau 2 : ligne — même opacité que label et point */
 .nav-item-line {
   width: 100%;
   height: 1px;
-  background: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.80);
 }
-.nav-item.active .nav-item-line { background: rgba(255,255,255,.55); }
+.nav-item.active .nav-item-line,
+.nav-item:hover  .nav-item-line { background: var(--white); }
 
 /* Mobile hamburger */
 .nav-burger {
@@ -501,7 +502,7 @@ a { color: inherit; }
   animation: marquee 42s linear infinite;
   will-change: transform;
 }
-.marquee-track:hover { animation-play-state: paused; }
+/* pause gérée par JS via isHovered */
 /* Deux sets identiques — le track fait exactement 2× la largeur d'un set.
    translateX(-50%) tombe pile au début du set 2 = identique au set 1 → boucle invisible */
 .marquee-set {

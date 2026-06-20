@@ -42,48 +42,113 @@ document.querySelectorAll('a, button, .card-3d, .hp-project-card, .platform-link
 document.addEventListener('mousedown', () => cursor.classList.add('expand'));
 document.addEventListener('mouseup',   () => cursor.classList.remove('expand'));
 
-/* --- Marquee — swipe mobile pour accélérer + lightbox au tap --- */
+/* --- Marquee — scroll JS + drag tactile direct + lightbox --- */
 (function () {
-  const marqueeWrap  = document.querySelector('.marquee-wrap');
-  const marqueeTrack = document.querySelector('.marquee-track');
-  if (!marqueeWrap || !marqueeTrack) return;
+  const wrap  = document.querySelector('.marquee-wrap');
+  const track = document.querySelector('.marquee-track');
+  const set   = track && track.querySelector('.marquee-set');
+  if (!wrap || !track || !set) return;
 
-  const BASE_DURATION = 42;
+  /* Supprime l'animation CSS — on gère tout en JS */
+  track.style.animation = 'none';
 
-  // Swipe pour accélérer
-  let startX = 0, startTime = 0;
-  marqueeWrap.addEventListener('touchstart', e => {
-    startX    = e.touches[0].clientX;
-    startTime = Date.now();
-  }, { passive: true });
-  marqueeWrap.addEventListener('touchmove', e => {
-    const dx  = e.touches[0].clientX - startX;
-    const dt  = Date.now() - startTime || 1;
-    const vel = Math.abs(dx) / dt;                    // px/ms
-    const dur = Math.max(4, BASE_DURATION - vel * 90); // min 4s
-    marqueeTrack.style.animationDuration = dur + 's';
-  }, { passive: true });
-  marqueeWrap.addEventListener('touchend', () => {
-    marqueeTrack.style.animationDuration = BASE_DURATION + 's';
+  const BASE_SPEED = 110; // px/s (plus rapide que le CSS ~54 px/s)
+
+  let pos        = 0;
+  let lastTs     = null;
+  let extraVel   = 0;      // momentum post-drag (px/s, positif = vers droite)
+  let isDragging = false;
+  let isHovered  = false;
+  let prevX      = 0;
+  let prevTime   = 0;
+  let dragStartX = 0;      // pour distinguer tap vs swipe
+
+  function loop(ts) {
+    if (lastTs === null) lastTs = ts;
+    const dt = Math.min((ts - lastTs) / 1000, 0.05);
+    lastTs = ts;
+
+    /* Auto-scroll (s'arrête au hover desktop) */
+    if (!isHovered) pos -= BASE_SPEED * dt;
+
+    /* Momentum post-drag */
+    if (!isDragging) {
+      if (Math.abs(extraVel) > 2) {
+        pos      += extraVel * dt;
+        extraVel *= Math.pow(0.88, dt * 60); // décroissance indépendante du framerate
+      } else {
+        extraVel = 0;
+      }
+    }
+
+    /* Boucle infinie */
+    const sw = set.offsetWidth;
+    if (sw > 0) {
+      while (pos < -sw) pos += sw;
+      while (pos > 0)   pos -= sw;
+    }
+
+    track.style.transform = `translateX(${pos}px)`;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  /* Desktop : pause au hover */
+  wrap.addEventListener('mouseenter', () => { isHovered = true;  }, { passive: true });
+  wrap.addEventListener('mouseleave', () => { isHovered = false; }, { passive: true });
+
+  /* Touch : drag direct */
+  wrap.addEventListener('touchstart', e => {
+    isDragging = true;
+    extraVel   = 0;
+    prevX = dragStartX = e.touches[0].clientX;
+    prevTime   = Date.now();
   }, { passive: true });
 
-  // Lightbox — tap sur une photo pour agrandir
+  wrap.addEventListener('touchmove', e => {
+    const x   = e.touches[0].clientX;
+    const now = Date.now();
+    const dx  = x - prevX;
+    const dt  = now - prevTime || 16;
+
+    pos      += dx;                       // contrôle direct de la position
+    extraVel  = (dx / dt) * 1000;        // vitesse en px/s pour le momentum
+
+    prevX    = x;
+    prevTime = now;
+  }, { passive: true });
+
+  wrap.addEventListener('touchend', e => {
+    isDragging = false;
+
+    /* Tap (< 12px de déplacement total) → ouvrir lightbox */
+    const totalMove = Math.abs(e.changedTouches[0].clientX - dragStartX);
+    if (totalMove < 12) {
+      const el = document.elementFromPoint(
+        e.changedTouches[0].clientX,
+        e.changedTouches[0].clientY
+      );
+      if (el && el.classList.contains('marquee-img')) openLb(el.src);
+    }
+  }, { passive: true });
+
+  /* Lightbox */
   const lb = document.createElement('div');
   lb.id = 'marquee-lightbox';
   lb.innerHTML = '<img id="mlb-img" alt=""><button id="mlb-close">✕</button>';
   document.body.appendChild(lb);
 
-  const lbImg   = document.getElementById('mlb-img');
+  const lbImg = document.getElementById('mlb-img');
   const lbClose = document.getElementById('mlb-close');
 
+  function openLb(src) { lbImg.src = src; lb.classList.add('open'); }
+  const closeLb = () => lb.classList.remove('open');
+
+  /* Clic desktop sur les photos */
   document.querySelectorAll('.marquee-img').forEach(img => {
-    img.addEventListener('click', () => {
-      lbImg.src = img.src;
-      lb.classList.add('open');
-    });
+    img.addEventListener('click', () => openLb(img.src));
   });
 
-  const closeLb = () => lb.classList.remove('open');
   lbClose.addEventListener('click', closeLb);
   lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
