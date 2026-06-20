@@ -2,12 +2,11 @@
    MAIN.JS
    ============================================================ */
 
-/* --- Préloader — une seule fois par session --- */
+/* --- Préloader — index.html uniquement, une seule fois par session --- */
 (function () {
   const preloader = document.getElementById('preloader');
   if (!preloader) return;
 
-  // Déjà affiché dans cette session → on cache immédiatement
   if (sessionStorage.getItem('preloader-shown')) {
     preloader.style.display = 'none';
     return;
@@ -16,18 +15,20 @@
 
   const word = preloader.querySelector('.preloader-word');
 
-  // Mot monte du bas → centre
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => { word.classList.add('visible'); });
-  });
+  // Mot monte du bas après ~0.8s
+  setTimeout(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { word.classList.add('visible'); });
+    });
+  }, 800);
 
-  // Après 1.1s → préloader glisse vers le haut
+  // Slide-up après 0.8s d'attente + 3s d'affichage = 3.8s → total ~5s avec la transition
   setTimeout(() => {
     preloader.classList.add('slide-up');
     preloader.addEventListener('transitionend', () => {
       preloader.style.display = 'none';
     }, { once: true });
-  }, 1100);
+  }, 3800);
 })();
 
 /* --- Custom cursor --- */
