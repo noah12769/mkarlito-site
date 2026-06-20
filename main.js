@@ -2,33 +2,27 @@
    MAIN.JS
    ============================================================ */
 
-/* --- Préloader — index.html uniquement, une seule fois par session --- */
+/* --- Préloader — index.html uniquement, à chaque chargement --- */
 (function () {
   const preloader = document.getElementById('preloader');
   if (!preloader) return;
 
-  if (sessionStorage.getItem('preloader-shown')) {
-    preloader.style.display = 'none';
-    return;
-  }
-  sessionStorage.setItem('preloader-shown', '1');
-
   const word = preloader.querySelector('.preloader-word');
 
-  // Mot monte du bas après ~0.8s
+  // Mot monte du bas après 0.5s
   setTimeout(() => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => { word.classList.add('visible'); });
     });
-  }, 800);
+  }, 500);
 
-  // Slide-up après 0.8s d'attente + 3s d'affichage = 3.8s → total ~5s avec la transition
+  // Slide-up à 3.1s → fin de transition à ~4s
   setTimeout(() => {
     preloader.classList.add('slide-up');
     preloader.addEventListener('transitionend', () => {
       preloader.style.display = 'none';
     }, { once: true });
-  }, 3800);
+  }, 3100);
 })();
 
 /* --- Custom cursor --- */
@@ -47,6 +41,53 @@ document.querySelectorAll('a, button, .card-3d, .hp-project-card, .platform-link
 });
 document.addEventListener('mousedown', () => cursor.classList.add('expand'));
 document.addEventListener('mouseup',   () => cursor.classList.remove('expand'));
+
+/* --- Marquee — swipe mobile pour accélérer + lightbox au tap --- */
+(function () {
+  const marqueeWrap  = document.querySelector('.marquee-wrap');
+  const marqueeTrack = document.querySelector('.marquee-track');
+  if (!marqueeWrap || !marqueeTrack) return;
+
+  const BASE_DURATION = 42;
+
+  // Swipe pour accélérer
+  let startX = 0, startTime = 0;
+  marqueeWrap.addEventListener('touchstart', e => {
+    startX    = e.touches[0].clientX;
+    startTime = Date.now();
+  }, { passive: true });
+  marqueeWrap.addEventListener('touchmove', e => {
+    const dx  = e.touches[0].clientX - startX;
+    const dt  = Date.now() - startTime || 1;
+    const vel = Math.abs(dx) / dt;                    // px/ms
+    const dur = Math.max(4, BASE_DURATION - vel * 90); // min 4s
+    marqueeTrack.style.animationDuration = dur + 's';
+  }, { passive: true });
+  marqueeWrap.addEventListener('touchend', () => {
+    marqueeTrack.style.animationDuration = BASE_DURATION + 's';
+  }, { passive: true });
+
+  // Lightbox — tap sur une photo pour agrandir
+  const lb = document.createElement('div');
+  lb.id = 'marquee-lightbox';
+  lb.innerHTML = '<img id="mlb-img" alt=""><button id="mlb-close">✕</button>';
+  document.body.appendChild(lb);
+
+  const lbImg   = document.getElementById('mlb-img');
+  const lbClose = document.getElementById('mlb-close');
+
+  document.querySelectorAll('.marquee-img').forEach(img => {
+    img.addEventListener('click', () => {
+      lbImg.src = img.src;
+      lb.classList.add('open');
+    });
+  });
+
+  const closeLb = () => lb.classList.remove('open');
+  lbClose.addEventListener('click', closeLb);
+  lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
+})();
 
 /* --- Fade-in on scroll --- */
 const io = new IntersectionObserver(entries => {

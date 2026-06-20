@@ -529,6 +529,29 @@ a { color: inherit; }
   border-bottom: 1px solid var(--g700);
 }
 
+/* Lightbox carrousel */
+#marquee-lightbox {
+  position: fixed; inset: 0; z-index: 8000;
+  background: rgba(0,0,0,.96);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+#marquee-lightbox.open { opacity: 1; pointer-events: all; }
+#mlb-img {
+  max-width: 92vw; max-height: 88vh;
+  object-fit: contain;
+  display: block;
+}
+#mlb-close {
+  position: absolute; top: 20px; right: 24px;
+  background: none; border: 1px solid rgba(255,255,255,.3);
+  color: var(--white); font-size: 14px; letter-spacing: .1em;
+  padding: 6px 12px; cursor: pointer;
+  transition: background .2s;
+}
+#mlb-close:hover { background: rgba(255,255,255,.1); }
+
 /* ============================================================
    FOOTER — réseaux sur toute la largeur, plus grands
    ============================================================ */
