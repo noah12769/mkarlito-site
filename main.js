@@ -52,7 +52,7 @@ document.addEventListener('mouseup',   () => cursor.classList.remove('expand'));
   /* Supprime l'animation CSS — on gère tout en JS */
   track.style.animation = 'none';
 
-  const BASE_SPEED = 110; // px/s (plus rapide que le CSS ~54 px/s)
+  const BASE_SPEED = 75; // px/s
 
   let pos        = 0;
   let lastTs     = null;

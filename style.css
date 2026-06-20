@@ -472,6 +472,10 @@ a { color: inherit; }
   line-height: 1.95;
   color: rgba(255,255,255,.62);
 }
+@media (min-width: 769px) {
+  .quote-col p { font-size: 15px; line-height: 1.85; }
+  .quote-col-label { font-size: 11px; }
+}
 
 /* ============================================================
    "NOUS SOMMES…" — au-dessus du carrousel
